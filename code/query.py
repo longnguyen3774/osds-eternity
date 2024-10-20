@@ -44,7 +44,7 @@ get_block_with_max_eth = transactions_collection.aggregate([
 for block in get_block_with_max_eth:
     print(block)
 
-# 5 Số lượng giao dịch từng ngày/tháng/năm
+# 4 Số lượng giao dịch từng ngày/tháng/năm
 print("\nSố lượng giao dịch từng ngày:")
 get_transaction_count_by_date = transactions_collection.aggregate([
     {'$group': {
@@ -57,7 +57,7 @@ get_transaction_count_by_date = transactions_collection.aggregate([
 for transaction_count in get_transaction_count_by_date:
     print(transaction_count)
 
-# 6 Tháng/năm có số lượng giao dịch nhiều nhất
+# 5 Tháng/năm có số lượng giao dịch nhiều nhất
 print("\nTháng/năm có số lượng giao dịch nhiều nhất:")
 get_month_with_max_transaction = transactions_collection.aggregate([
     {'$group': {
