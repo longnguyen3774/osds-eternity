@@ -3,11 +3,13 @@ from selenium.webdriver.common.by import By
 from datetime import datetime
 
 
-def collect_data(page=1):
+def collect_data_page(driver, block_number, page=1):
     """
-    Collect transaction data from the Etherscan website for a given page.
+    Collect transaction data from the Etherscan website for a given block and page.
 
     Parameters:
+    driver (webdriver): Selenium WebDriver instance to control the browser.
+    block_number (int): The block number from which to collect transaction data.
     page (int): The page number to collect data from. Defaults to 1.
 
     Returns:
@@ -16,7 +18,7 @@ def collect_data(page=1):
     Each transaction contains:
         - 'transaction_hash': Hash of the transaction (str)
         - 'method': Method used in the transaction (str)
-        - 'block': Block number associated with the transaction (str)
+        - 'block': Block number associated with the transaction (int)
         - 'age': Age of the transaction (datetime)
         - 'from': Address of the sender (str)
         - 'to': Address of the recipient (str)
@@ -28,57 +30,62 @@ def collect_data(page=1):
     """
 
     try:
-        # Initialize the Chrome WebDriver
-        driver = webdriver.Chrome()
-
         # Open the specified Etherscan transactions page
-        driver.get('https://etherscan.io/txs?p=' + str(page))
+        driver.get(f'https://etherscan.io/txs?block={block_number}&ps=100&p={page}')
 
         # Find all 'tr' elements on the page, skip the header row (index 0)
-        tr_tags = driver.find_elements(By.TAG_NAME, 'tr')[1:]
+        transaction_rows = driver.find_elements(By.TAG_NAME, 'tr')[1:]
 
         # List to store transaction data
         transactions = []
 
         # Iterate over each transaction row ('tr' tag)
-        for tr_tag in tr_tags:
+        for row in transaction_rows:
             try:
                 # Find all 'td' elements in the current row
-                td_tags = tr_tag.find_elements(By.TAG_NAME, 'td')
+                transaction_columns = row.find_elements(By.TAG_NAME, 'td')
 
                 # Initialize a dictionary to store the transaction data
-                transaction = dict()
+                transaction = {}
 
-                # Collect individual transaction details
-                transaction_hash = td_tags[1].text  # Transaction hash
-                method = td_tags[2].text  # Transaction method
-                block = td_tags[3].text  # Block number
+                # Extract individual transaction details
+                transaction_hash = transaction_columns[1].text  # Transaction hash
+                method = transaction_columns[2].text  # Transaction method
+
+                # Extract the block number and convert to integer
+                block = int(transaction_columns[3].text)
 
                 # Extract the age of the transaction from the 'span' tag and convert to datetime
-                age = str(td_tags[5].find_element(By.TAG_NAME, 'span').get_attribute('data-bs-title'))
-                age = datetime.strptime(age, '%Y-%m-%d %H:%M:%S')
+                age_str = transaction_columns[5].find_element(By.TAG_NAME, 'span').get_attribute('data-bs-title')
+                age = datetime.strptime(age_str, '%Y-%m-%d %H:%M:%S')
 
                 # Extract sender's address by removing the base URL part
-                _from = str(td_tags[7].find_element(By.TAG_NAME, 'a').get_attribute('href').replace(
-                    'https://etherscan.io/address/', ''))
+                sender_address = transaction_columns[7].find_element(By.TAG_NAME, 'a').get_attribute('href').replace(
+                    'https://etherscan.io/address/', '')
 
                 # Extract recipient's address by removing the base URL part
-                _to = str(td_tags[9].find_element(By.TAG_NAME, 'a').get_attribute('href').replace(
-                    'https://etherscan.io/address/', ''))
+                recipient_address = transaction_columns[9].find_element(By.TAG_NAME, 'a').get_attribute('href').replace(
+                    'https://etherscan.io/address/', '')
 
-                # Extract the amount transferred and convert to float, removing 'ETH'
-                amount = float(td_tags[10].text.replace(' ETH', ''))
+                # Extract the amount transferred and convert to float, accounting for ETH, gwei, or wei units
+                amount_str = transaction_columns[10].text
+                if amount_str.endswith('ETH'):
+                    amount = float(amount_str.replace(' ETH', ''))
+                elif amount_str.endswith('gwei'):
+                    amount = float(amount_str.replace(' gwei', '')) * 1e-9
+                else:
+                    amount = float(amount_str.replace(' wei', '')) * 1e-18
 
                 # Extract the transaction fee and convert to float
-                txn_fee = float(td_tags[11].text)
+                txn_fee = float(transaction_columns[11].text)
 
                 # Populate the transaction dictionary
                 transaction['transaction_hash'] = transaction_hash
                 transaction['method'] = method
                 transaction['block'] = block
                 transaction['age'] = age
-                transaction['from'] = _from
-                transaction['to'] = _to
+                transaction['from'] = sender_address
+                transaction['to'] = recipient_address
                 transaction['amount'] = amount
                 transaction['txn_fee'] = txn_fee
 
@@ -86,19 +93,60 @@ def collect_data(page=1):
                 transactions.append(transaction)
 
             except Exception as e:
-                print(e)
-
-        # Close the browser after collecting data
-        driver.quit()
+                # Catch and log any exceptions for this row
+                print(f"Error parsing transaction row: {e}")
 
         # Return the collected transactions
         return transactions
 
     except Exception as e:
-        print(e)
+        # Log any exceptions encountered while loading the page
+        print(f"Error accessing the page: {e}")
         return []
 
 
-# Call the function and print the result
+def collect_data_block(driver, block_number):
+    """
+    Collect transaction data for all pages associated with a given block on Etherscan.
+
+    Parameters:
+    driver (webdriver): Selenium WebDriver instance to control the browser.
+    block_number (int): The block number from which to collect transaction data.
+
+    Returns:
+    list[dict]: A list of dictionaries, where each dictionary contains details of all transactions within the block.
+    """
+
+    page = 1  # Start from the first page
+    all_transactions = []
+
+    # Loop through each page until there are no more transactions
+    while True:
+        # Collect data for the current page
+        transactions = collect_data_page(driver=driver, block_number=block_number, page=page)
+
+        if transactions:
+            # If transactions exist, add them to the main list and increment the page
+            all_transactions.extend(transactions)
+            page += 1
+        else:
+            # Stop when no more transactions are found on the next page
+            break
+
+    return all_transactions
+
+
+# Main execution block
 if __name__ == "__main__":
-    print(collect_data())
+    # Initialize the WebDriver
+    _driver = webdriver.Chrome()
+
+    # Collect transaction data for a specific block
+    _block_number = 21005715  # Example block number
+    _transactions = collect_data_block(_driver, _block_number)
+
+    # Print the collected transaction data
+    print(_transactions)
+
+    # Close the WebDriver session
+    _driver.quit()
