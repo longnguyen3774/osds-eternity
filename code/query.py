@@ -15,7 +15,9 @@ get_total_eth_by_date = transactions_collection.aggregate([
                 'month': { '$month': '$age' },
                 'day': { '$dayOfMonth': '$age' }},
             'totalETH': { '$sum': '$amount' }}}])
-print(get_total_eth_by_date)
+
+for total in get_total_eth_by_date:
+    print(total)
 
 # 2 Phí giao dịch trung bình trong ngày
 print("\nPhí giao dịch trung bình trong ngày:")
@@ -26,7 +28,9 @@ get_avg_fee_by_date = transactions_collection.aggregate([
                 'month': { '$month': '$age' },
                 'day': { '$dayOfMonth': '$age' }},
             'avgFee': { '$avg': '$txn_fee' }}}])
-print(get_avg_fee_by_date)
+
+for fee in get_avg_fee_by_date:
+    print(fee)
 
 # 3 Khối nào có lượng ETH giao dịch lớn nhất
 print("\nKhối có lượng ETH giao dịch lớn nhất:")
@@ -39,8 +43,6 @@ get_block_with_max_eth = transactions_collection.aggregate([
 
 for block in get_block_with_max_eth:
     print(block)
-
-# 4 Tính tỷ lệ giao dịch trên sàn giao dịch
 
 # 5 Số lượng giao dịch từng ngày/tháng/năm
 print("\nSố lượng giao dịch từng ngày:")
