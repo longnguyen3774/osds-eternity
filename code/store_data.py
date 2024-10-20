@@ -12,6 +12,3 @@ driver = webdriver.Chrome()
 transactions_collection.insert_many(collect_data_block(driver, 21005717))
 transactions_collection.insert_many(collect_data_block(driver, 21005718))
 driver.quit()
-
-
-
