@@ -7,6 +7,10 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client['ether_db']
 transactions_collection = db['transactions']
 
+
+for doc in transactions_collection.find({'txn_fee': {'$gte': 0.0003}}):
+    print(doc)
+
 # 1 Tổng lượng ETH giao dịch trong ngày/tháng/năm
 print("Tổng lượng ETH giao dịch trong ngày:")
 get_total_eth_by_date = transactions_collection.aggregate([
@@ -15,7 +19,8 @@ get_total_eth_by_date = transactions_collection.aggregate([
                 'month': { '$month': '$age' },
                 'day': { '$dayOfMonth': '$age' }},
             'totalETH': { '$sum': '$amount' }}}])
-print(get_total_eth_by_date)
+for doc in get_total_eth_by_date:
+    print(doc)
 
 # 2 Phí giao dịch trung bình trong ngày
 print("\nPhí giao dịch trung bình trong ngày:")
@@ -26,7 +31,8 @@ get_avg_fee_by_date = transactions_collection.aggregate([
                 'month': { '$month': '$age' },
                 'day': { '$dayOfMonth': '$age' }},
             'avgFee': { '$avg': '$txn_fee' }}}])
-print(get_avg_fee_by_date)
+for doc in get_avg_fee_by_date:
+    print(doc)
 
 # 3 Khối nào có lượng ETH giao dịch lớn nhất
 print("\nKhối có lượng ETH giao dịch lớn nhất:")
