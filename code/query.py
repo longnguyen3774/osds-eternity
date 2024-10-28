@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pymongo import MongoClient
 from etherscan_scraper import collect_data_page
 from etherscan_scraper import collect_data_block
@@ -6,6 +8,11 @@ from etherscan_scraper import collect_data_block
 client = MongoClient('mongodb://localhost:27017/')
 db = client['ether_db']
 transactions_collection = db['transactions']
+
+################################################
+transactions_collection.update_one({'txn_fee': 0.00021361}, {'$set': {'amount': 0.1}})
+for doc in transactions_collection.find({'txn_fee': 0.00021361}):
+    print(doc)
 
 # 1 Tổng lượng ETH giao dịch trong ngày/tháng/năm
 print("Tổng lượng ETH giao dịch trong ngày:")
