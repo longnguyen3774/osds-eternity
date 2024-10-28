@@ -1,4 +1,4 @@
-from selenium import webdriver
+
 from pymongo import MongoClient
 from bs4_etherscan_scraper import collect_data_block
 
@@ -8,8 +8,14 @@ db = client['ether_db']
 
 transactions_collection = db['transactions']
 
-# driver = webdriver.Chrome()
-transactions_collection.insert_many(collect_data_block(21005717))
-transactions_collection.insert_many(collect_data_block(21005718))
-transactions_collection.insert_many(collect_data_block(21005719))
-# driver.quit()
+last_block = 0
+i = last_block+1
+while True:
+    data = collect_data_block(i)
+    if i > 1000000:
+        if data:
+            transactions_collection.insert_many(data)
+            i += 1
+        else:
+            break
+    transactions_collection.insert_many(data)
