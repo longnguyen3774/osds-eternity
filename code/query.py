@@ -90,26 +90,91 @@ count_to = transactions_collection.aggregate([
 for count in count_to:
     print(count)
 
-# 8 Tìm giao dịch có phí thấp nhất
+# 8 Tìm ngày có số lượng giao dịch cao nhất
+print("\nNgày có số lượng giao dịch cao nhất và tổng lượng ETH giao dịch trong ngày đó:")
+day_result = transactions_collection.aggregate([
+    {
+        '$group': {
+            '_id': { '$dateToString': { 'format': '%Y-%m-%d', 'date': '$age' } },
+            'transaction_count': { '$sum': 1 },
+            'total_eth': { '$sum': '$amount' }}},
+    { '$sort': { 'transaction_count': -1 } },
+    { '$limit': 1 }])
+
+for day in day_result:
+    print(f"Ngày: {r['_id']}, Số giao dịch: {r['transaction_count']}, Tổng lượng ETH: {r['total_eth']}")
+
+# 9 Đếm số lượng giao dịch có giá trị ETH lớn hơn trung bình
+    # Tính giá trị trung bình của các giao dịch
+average_result = transactions_collection.aggregate([
+    { '$group': { '_id': None, 'average_amount': { '$avg': '$amount' }}}])
+
+average_amount = list(average_result)[0]['average_amount']
+
+    # Đếm số giao dịch có giá trị lớn hơn giá trị trung bình
+count = transactions_collection.count_documents({ 'amount': { '$gt': average_amount }})
+print(f"Số lượng giao dịch có giá trị lớn hơn trung bình ({average_amount} ETH): {count}")
+
+# 10 Tìm các địa chỉ gửi (from) có tổng giá trị ETH gửi đi cao nhất
+print("\nCác địa chỉ gửi có tổng giá trị ETH gửi đi cao nhất:")
+result = transactions_collection.aggregate([
+    { '$group': { '_id': '$from', 'total_eth_sent': { '$sum': '$amount' }}},
+    { '$sort': { 'total_eth_sent': -1 }}, #sắp xếp từ cao đến thấp
+    { '$limit': 5 }]) #chỉ lấy 5 giá trị
+
+for r in result:
+    print(r)
+
+# 11 Tìm giao dịch có phí thấp nhất
 print("\nGiao dịch có phí thấp nhất:")
 get_transaction_with_lowest_fee = transactions_collection.find().sort('txn_fee', 1).limit(1)
 
 for lowest_fee in get_transaction_with_lowest_fee:
     print(lowest_fee)
 
-# 9 Tìm giao dịch có phí cao nhất
+# 12 Tìm giao dịch có phí cao nhất
 print("\nGiao dịch có phí cao nhất:")
 get_transaction_with_highest_fee = transactions_collection.find().sort('txn_fee', -1).limit(1)
 
 for highest_fee in get_transaction_with_highest_fee:
     print(highest_fee)
 
-# 10 Tìm giao dịch mới nhất
+# 13 Tìm giao dịch mới nhất
 print("\nGiao dịch mới thực hiện gần đây nhất:")
 new_transaction = transactions_collection.find().sort('age', -1).limit(1)
 
 for new in new_transaction:
     print(new)
+
+# 14 Đếm số lượng giao dịch có phi giao dịch thấp hơn 0,001 ETH
+count_transaction_lower_than = transactions_collection.count_documents({ 'txn_fee': { '$lt': 0.001 }})
+print(f"\nSố lượng giao dịch có phí thấp hơn 0.001 ETH: {count_transaction_lower_than}")
+
+# 15 Tìm tất cả giao dịch có địa chỉ nhận (to) là trống
+print("\nGiao dịch không có địa chỉ nhận (to):")
+null_transaction = transactions_collection.find({ 'to': { '$in': [None, '']}})
+
+for null in null_transaction:
+    print(null)
+
+# 16 Lấy danh sách tất cả các địa chỉ gửi (from) không trùng lặp
+print("\nDanh sách các địa chỉ gửi không trùng lặp:")
+from_address = transactions_collection.distinct('from')
+
+for address in from_address:
+    print(address)
+
+# 17 Tìm các giao dịch có địa chỉ nhận (to) và gửi (from) giống nhau
+print("\nGiao dịch mà địa chỉ gửi và nhận giống nhau:")
+get_transaction_with_same_address = transactions_collection.find({ '$expr': { '$eq': ['$from', '$to'] } })
+
+for same_address in get_transaction_with_same_address:
+    print(same_address)
+
+# 18 Đếm số lượng giao dịch có giá trị ETH bằng 0
+count_transaction_with_equal_0 = transactions_collection.count_documents({ 'amount': 0 })
+print(f"Số lượng giao dịch có giá trị ETH bằng 0: {count_transaction_with_equal_0}")
+
 
 # Đóng kết nối MongoDB khi hoàn thành
 client.close()
