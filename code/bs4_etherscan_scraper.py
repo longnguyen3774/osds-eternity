@@ -115,8 +115,8 @@ def collect_data_block(block_number):
         transactions = collect_data_page(block_number, page)
         if transactions:
             all_transactions.extend(transactions)
-            page += 1
             print(f'Collected page {page}!')
+            page += 1
         else:
             break
     print(f'Block {block_number}: Collection complete!')
