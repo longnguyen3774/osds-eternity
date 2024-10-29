@@ -69,7 +69,7 @@ def collect_data_page(block_number, page=1):
             recipient_address = columns[9].find('a').get('href').replace('/address/', '')
 
             # Parse amount and handle units
-            amount_str = columns[10].text.strip()
+            amount_str = columns[10].text.strip().replace(',', '')
             if 'ETH' in amount_str:
                 amount = float(amount_str.split()[0])
             elif 'gwei' in amount_str:
@@ -116,6 +116,7 @@ def collect_data_block(block_number):
         if transactions:
             all_transactions.extend(transactions)
             page += 1
+            print(f'Collected page {page}!')
         else:
             break
     print(f'Block {block_number}: Collection complete!')
