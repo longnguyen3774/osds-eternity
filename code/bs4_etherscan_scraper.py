@@ -46,7 +46,7 @@ def collect_data_page(block_number, page=1):
     soup = BeautifulSoup(page_content, 'html.parser')
     transaction_rows = soup.find_all('tr')[1:]  # Skip the header row
 
-    # If page don't contain any transaction, break
+    # If the page contains no transactions, exit early
     if len(transaction_rows) == 1: return []
 
     transactions = []
@@ -69,7 +69,7 @@ def collect_data_page(block_number, page=1):
             recipient_address = columns[9].find('a').get('href').replace('/address/', '')
 
             # Parse amount and handle units
-            amount_str = columns[10].text.strip()
+            amount_str = columns[10].text.strip().replace(',', '')
             if 'ETH' in amount_str:
                 amount = float(amount_str.split()[0])
             elif 'gwei' in amount_str:
@@ -115,6 +115,7 @@ def collect_data_block(block_number):
         transactions = collect_data_page(block_number, page)
         if transactions:
             all_transactions.extend(transactions)
+            print(f'Collected page {page}!')
             page += 1
         else:
             break
