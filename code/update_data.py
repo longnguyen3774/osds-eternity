@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from datetime import datetime
 from selenium import webdriver
 from pymongo import MongoClient
-from etherscan_scraper import collect_data_block
+from bs4_etherscan_scraper import collect_data_block
 
 client = MongoClient('mongodb://localhost:27017')
 client.drop_database('ether_db')
@@ -18,7 +18,7 @@ def get_max_block(collection):
     return max_block["block"] if max_block else 0
 
 
-def update_blocks_and_collect(driver, collection, start_block=None, end_block=None):
+def update_blocks(driver, collection, start_block=None, end_block=None):
     """
     Liên tục cào dữ liệu giao dịch cho các số block tăng dần.
     """
@@ -41,10 +41,10 @@ def update_blocks_and_collect(driver, collection, start_block=None, end_block=No
 if __name__ == "__main__":
     driver = webdriver.Chrome()
     client = MongoClient("mongodb://localhost:27017/")
-    db = client["etherscan_data"]
+    db = client["ether_db"]
     collection = db["transactions"]
 
     # Số block bắt đầu (có thể thay đổi)
-    update_blocks_and_collect(driver, collection, start_block=21005719, end_block=21005730)
+    update_blocks(driver, collection, start_block=21005719, end_block=21005730)
 
     driver.quit()
