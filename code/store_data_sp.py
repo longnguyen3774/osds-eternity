@@ -7,7 +7,7 @@ db = client['ether_db']
 
 transactions_collection = db['transactions']
 
-for i in range(18908895, 18958622):
+for i in range(18949821, 18958622):
     transactions = collect_data_block(i)
     if not transactions:
         continue

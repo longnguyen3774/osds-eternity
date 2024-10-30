@@ -46,7 +46,7 @@ def collect_data_page(block_number, page=1):
     soup = BeautifulSoup(page_content, 'html.parser')
     transaction_rows = soup.find_all('tr')[1:]  # Skip the header row
 
-    # If page don't contain any transaction, break
+    # If the page contains no transactions, exit early
     if len(transaction_rows) == 1: return []
 
     transactions = []
